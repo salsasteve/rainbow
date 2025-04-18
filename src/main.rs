@@ -1,11 +1,11 @@
-// filepath: /home/salsasteve/code/rainbow/src/main.rs
+use rainbow::commands::{Config, run};
 use clap::Parser;
-use rainbow::Config;
-use rainbow::run;
 
 fn main() {
+    // Parse the command-line arguments
     let config = Config::parse();
 
+    // Run the application logic
     if let Err(e) = run(config) {
         eprintln!("Application error: {e}");
         std::process::exit(1);
