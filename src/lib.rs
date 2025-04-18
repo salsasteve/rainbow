@@ -1,27 +1,58 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::error::Error;
 use std::fs;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Config {
-    pub query: String,
-    pub file_path: String,
-    #[arg(long = "ignore-case", short = 'i', env = "IGNORE_CASE", default_value_t = false)]
-    pub ignore_case: bool,
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    Search {
+        #[arg(long = "query", short = 'q', env = "QUERY")]
+        query: String,
+        #[arg(long = "file", short = 'f', env = "FILE")]
+        file_path: String,
+        #[arg(
+            long = "ignore-case",
+            short = 'i',
+            env = "IGNORE_CASE",
+            default_value_t = false
+        )]
+        ignore_case: bool,
+    },
+
+    Example {
+        #[arg(long, short)]
+        example_arg: String,
+    },
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(config.file_path)?;
+    match config.command {
+        Commands::Search {
+            query,
+            file_path,
+            ignore_case,
+        } => {
+            let contents = fs::read_to_string(file_path)?;
 
-    let results = if config.ignore_case {
-        search_case_insensitive(&config.query, &contents)
-    } else {
-        search(&config.query, &contents)
-    };
+            let results = if ignore_case {
+                search_case_insensitive(&query, &contents)
+            } else {
+                search(&query, &contents)
+            };
 
-    for line in results {
-        println!("{line}");
+            for line in results {
+                println!("{line}");
+            }
+        }
+        Commands::Example { example_arg } => {
+            println!("Example command executed with argument: {example_arg}");
+        }
     }
 
     Ok(())
@@ -39,10 +70,7 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     results
 }
 
-pub fn search_case_insensitive<'a>(
-    query: &str,
-    contents: &'a str,
-) -> Vec<&'a str> {
+pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
     let mut results = Vec::new();
 
@@ -54,8 +82,6 @@ pub fn search_case_insensitive<'a>(
 
     results
 }
-
-
 
 #[cfg(test)]
 mod tests {
