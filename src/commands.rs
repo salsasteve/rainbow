@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::error::Error;
 use std::fs;
+use crate::telegram::send_message_to_chat;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -29,7 +30,7 @@ pub enum Commands {
         #[arg(long, short)]
         example_arg: String,
     },
-    Fake {
+    FakeData {
         #[arg(long, short)]
         columns: String,
         #[arg(long, short)]
@@ -37,9 +38,15 @@ pub enum Commands {
         #[arg(long, short)]
         file_path: String,
     },
+    SendTelegram {
+        #[arg(long, short)]
+        message: String,
+        #[arg(long, short)]
+        chat_id: String,
+    },
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
     match config.command {
         Commands::Search {
             query,
@@ -61,7 +68,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         Commands::Example { example_arg } => {
             println!("Example command executed with argument: {example_arg}");
         }
-        Commands::Fake { columns, rows, file_path } => {
+        Commands::FakeData { columns, rows, file_path } => {
             // Parse the columns into a vector of tuples (column_name, fake_type)
             let parsed_columns: Vec<(&str, &str)> = columns
                 .split(',')
@@ -78,12 +85,31 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             let data = crate::faker::generate_fake_data_with_types(parsed_columns, rows);
 
             // Write data to CSV
+            if data.is_empty() {
+                eprintln!("No data generated. Please check your column types.");
+                std::process::exit(1);
+            }
             if let Err(e) = crate::faker::write_data_to_csv(data, &file_path) {
                 eprintln!("Failed to write data to CSV: {e}");
                 std::process::exit(1);
             }
 
             println!("Fake data successfully written to {file_path}");
+        }
+        Commands::SendTelegram { message, chat_id } => {
+            // How to get the chat id from a group
+            // https://stackoverflow.com/a/38388851/10687191
+            // TODO: Implement logic to retrieve chat ID from a group
+
+            println!("Sending message: '{message}' to chat ID: {chat_id}");
+            let chat_id: i64 = chat_id.parse().map_err(|_| {
+                eprintln!("Invalid chat ID format. It should be a number.");
+                std::process::exit(1);
+            })?;
+            if let Err(e) = send_message_to_chat(chat_id, message).await {
+                eprintln!("Failed to send message: {e}");
+                std::process::exit(1);
+            }
         }
     }
 
