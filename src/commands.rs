@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use std::error::Error;
-use std::fs;
+use tokio::fs;
 use crate::telegram::send_message_to_chat;
 use crate::ok_kanye::fetch_kanye_quote;
 
@@ -58,7 +58,7 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
             file_path,
             ignore_case,
         } => {
-            let contents = fs::read_to_string(file_path)?;
+            let contents = fs::read_to_string(file_path).await?;
 
             let results = if ignore_case {
                 search_case_insensitive(&query, &contents)
