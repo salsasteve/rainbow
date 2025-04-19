@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use std::error::Error;
 use std::fs;
 use crate::telegram::send_message_to_chat;
+use crate::ok_kanye::fetch_kanye_quote;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -41,6 +42,10 @@ pub enum Commands {
     SendTelegram {
         #[arg(long, short)]
         message: String,
+        #[arg(long, short)]
+        chat_id: String,
+    },
+    GoodMorningKanye {
         #[arg(long, short)]
         chat_id: String,
     },
@@ -111,6 +116,22 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 std::process::exit(1);
             }
         }
+        Commands::GoodMorningKanye { chat_id } => {
+            let kanye_quote = fetch_kanye_quote().await.map_err(|e| {
+                eprintln!("Failed to fetch Kanye quote: {e}");
+                std::process::exit(1);
+            })?;
+            let chat_id: i64 = chat_id.parse().map_err(|_| {
+                eprintln!("Invalid chat ID format. It should be a number.");
+                std::process::exit(1);
+            })?;
+            let message = format!("Good morning! Kanye says: {}", kanye_quote.quote);
+            if let Err(e) = send_message_to_chat(chat_id, message).await {
+                eprintln!("Failed to send message: {e}");
+                std::process::exit(1);
+            }
+        }
+          
     }
 
     Ok(())
