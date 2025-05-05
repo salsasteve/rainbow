@@ -7,6 +7,7 @@ use fake::Fake;
 use std::collections::HashMap;
 use fake::locales::EN;
 use csv::Writer;
+use std::io::{Error, ErrorKind};
 
 static SUPPORTED_TYPES: [&str; 11] = [
     "FirstName",
@@ -28,7 +29,7 @@ pub fn generate_fake_data_with_types(
 ) -> Vec<HashMap<String, String>> {
     let mut data = Vec::new();
 
-    // Validate the columns
+    
     if !validate_columns(columns.clone()) {
         eprintln!("Invalid column types provided.");
         return data;
@@ -81,20 +82,17 @@ pub fn write_data_to_csv(
 ) -> std::io::Result<()> {
     let mut wtr = Writer::from_path(file_path)?;
 
-    // Define the column order based on the first row
     let headers: Vec<String> = if let Some(first_row) = data.first() {
         first_row.keys().cloned().collect()
     } else {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
             "No data to write",
         ));
     };
 
-    // Write the header row
     wtr.write_record(&headers)?;
 
-    // Write each row in the same order as the headers
     for row in data {
         let values: Vec<String> = headers
             .iter()
@@ -163,7 +161,6 @@ mod tests {
 
         assert!(result.is_ok());
 
-        // Clean up the test file
         std::fs::remove_file(file_path).unwrap();
     }
 }

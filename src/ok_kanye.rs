@@ -6,6 +6,7 @@ pub struct KanyeQuote {
     pub quote: String,
 }
 
+/// Fetch a random Kanye West quote from the API
 pub async fn fetch_kanye_quote() -> Result<KanyeQuote, Error> {
 
     let url = "https://api.kanye.rest";

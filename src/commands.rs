@@ -86,10 +86,8 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 })
                 .collect();
 
-            // Generate fake data
             let data = crate::faker::generate_fake_data_with_types(parsed_columns, rows);
 
-            // Write data to CSV
             if data.is_empty() {
                 eprintln!("No data generated. Please check your column types.");
                 std::process::exit(1);
